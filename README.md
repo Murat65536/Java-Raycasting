@@ -1,1 +1,1 @@
-# A simple java raycaster.
+# A simple java ray caster.

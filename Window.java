@@ -35,7 +35,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     1, 0, 0, 0, 0, 1, 0, 1,
     1, 1, 1, 1, 1, 1, 1, 1
   };
-  private int playerAngle = 90;
+  private double playerAngle = 90;
   private double playerDeltaX = Math.cos(Math.toRadians(playerAngle));
   private double playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
 
@@ -83,7 +83,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     g.dispose();
   }
 
-  private int fixAngle(int angle) {
+  private double fixAngle(double angle) {
     if (angle > 359) {
       angle -= 360;
     }
@@ -106,14 +106,42 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
 
   public void keyPressed(KeyEvent event) {
+    int xOffset = 0;
+    int yOffset = 0;
+    if (playerDeltaX < 0) {
+      xOffset = -20;
+    }
+    else {
+      xOffset = 20;
+    }
+    if (playerDeltaY < 0) {
+      yOffset = -20;
+    }
+    else {
+      yOffset = 20;
+    }
+    int xGridPosition = playerX / 64;
+    int xOffsetAddGridPosition = (playerX + xOffset) / 64;
+    int xOffsetSubtractGridPosition = (playerX - xOffset) / 64;
+    int yGridPosition = playerY / 64;
+    int yOffsetAddGridPosition = (playerY + yOffset) / 64;
+    int yOffsetSubtractGridPosition = (playerY - yOffset) / 64;
     switch (event.getKeyCode()) {
       case KeyEvent.VK_W:
-        playerX += playerDeltaX * 5;
-        playerY += playerDeltaY * 5;
+        if (map[yGridPosition * mapX + xOffsetAddGridPosition] == 0) {
+          playerX += playerDeltaX * 5;
+        }
+        if (map[yOffsetAddGridPosition * mapX + xGridPosition] == 0) {
+          playerY += playerDeltaY * 5;
+        }
         break;
       case KeyEvent.VK_S:
-        playerX -= playerDeltaX * 5;
-        playerY -= playerDeltaY * 5;
+        if (map[yGridPosition * mapX + xOffsetSubtractGridPosition] == 0) {
+          playerX -= playerDeltaX * 5;
+        }
+        if (map[yOffsetSubtractGridPosition * mapX + xGridPosition] == 0) {
+          playerY -= playerDeltaY * 5;
+        }
         break;
       case KeyEvent.VK_A:
         playerAngle += 5;
@@ -234,7 +262,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       }
       g.draw(new Line2D.Double(playerX, playerY, rayX, rayY));
       
-      int cameraAngle = fixAngle(playerAngle - (int)rayAngle);
+      double cameraAngle = fixAngle(playerAngle - rayAngle);
       horizontalDistance = horizontalDistance * Math.cos(Math.toRadians(cameraAngle));
       int horizontalLine = (int)((mapSize * 320) / (horizontalDistance));
       if (horizontalLine > 320) {
