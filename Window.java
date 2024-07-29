@@ -458,7 +458,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
             g.setColor(new Color((int)((color * 255 * shade) / 2), (int)((color * 255 * shade) / 2), (int)(color * 255 * shade)));
             break;
           case 3:
-          g.setColor(new Color((int)((color * 255 * shade) / 2), (int)(color * 255 * shade), (int)((color * 255 * shade) / 2)));
+            g.setColor(new Color((int)((color * 255 * shade) / 2), (int)(color * 255 * shade), (int)((color * 255 * shade) / 2)));
             break;
         }
         g.drawRect(rays * 8 + 530, y + lineOff, 0, 0);
