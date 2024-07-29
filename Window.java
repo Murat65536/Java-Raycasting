@@ -302,6 +302,10 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         playerDeltaX = Math.cos(Math.toRadians(playerAngle));
         playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
         break;
+      case KeyEvent.VK_E:
+        if (wallMap[yOffsetAddGridPosition * mapX + xOffsetAddGridPosition] == 4) {
+          wallMap[yOffsetAddGridPosition * mapX + xOffsetAddGridPosition] = 0;
+        }
     }
   }
   public void keyReleased(KeyEvent event) {}
