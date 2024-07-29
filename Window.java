@@ -447,7 +447,20 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       }
       for (int y = 0; y < lineHeight; y++) {
         int color = textures[(int)textureY * 32 + (int)textureX];
-        g.setColor(new Color((int)(color * 255 * shade), (int)(color * 255 * shade), (int)(color * 255 * shade)));
+        switch (horizontalMapTexture) {
+          case 0:
+            g.setColor(new Color((int)(color * 255 * shade), (int)((color * 255 * shade) / 2), (int)((color * 255 * shade) / 2)));
+            break;
+          case 1:
+            g.setColor(new Color((int)(color * 255 * shade), (int)(color * 255 * shade), (int)((color * 255 * shade) / 2)));
+            break;
+          case 2:
+            g.setColor(new Color((int)((color * 255 * shade) / 2), (int)((color * 255 * shade) / 2), (int)(color * 255 * shade)));
+            break;
+          case 3:
+          g.setColor(new Color((int)((color * 255 * shade) / 2), (int)(color * 255 * shade), (int)((color * 255 * shade) / 2)));
+            break;
+        }
         g.drawRect(rays * 8 + 530, y + lineOff, 0, 0);
         textureY += textureYStep;
       }
