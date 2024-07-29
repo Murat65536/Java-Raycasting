@@ -309,9 +309,10 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
   private void drawRays3D() {
     Graphics2D g = bufferedImage.createGraphics();
-    g.setColor(Color.MAGENTA);
-    g.drawRect(526, 0, 1006, 160);
-    g.drawRect(526, 160, 1006, 320);
+    g.setColor(Color.BLUE);
+    g.fillRect(526, 0, 1006, 160);
+    g.setColor(Color.GREEN);
+    g.fillRect(526, 160, 1006, 160);
     int mapArrayX;
     int mapArrayY;
     int mapPosition;
