@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +32,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private int[] textureColors = new int[27648];
   private Scanner skyColorFile;
   private int[] skyColors = new int[28800];
+  private ArrayList<Integer> keys = new ArrayList<Integer>();
 
   private int[] wallMap = {
     1, 1, 1, 1, 1, 1, 2, 1,
@@ -81,6 +83,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
   @Override
   public void actionPerformed(ActionEvent e) {
+    movePlayer();
     clear();
     drawSky();
     drawRays3D();
@@ -128,7 +131,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     return angle;
   }
 
-  public void keyPressed(KeyEvent event) {
+  private void movePlayer() {
     int xOffset = 0;
     int yOffset = 0;
     if (playerDeltaX < 0) {
@@ -143,42 +146,52 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     else {
       yOffset = 20;
     }
-    switch (event.getKeyCode()) {
-      case KeyEvent.VK_W:
-        if (wallMap[playerY / 64 * mapX + (playerX + xOffset) / 64] == 0) {
-          playerX += playerDeltaX * 5;
-        }
-        if (wallMap[(playerY + yOffset) / 64 * mapX + playerX / 64] == 0) {
-          playerY += playerDeltaY * 5;
-        }
-        break;
-      case KeyEvent.VK_S:
-        if (wallMap[playerY / 64 * mapX + (playerY - yOffset) / 64] == 0) {
-          playerX -= playerDeltaX * 5;
-        }
-        if (wallMap[(playerY - yOffset) / 64 * mapX + playerX / 64] == 0) {
-          playerY -= playerDeltaY * 5;
-        }
-        break;
-      case KeyEvent.VK_A:
-        playerAngle += 5;
-        playerAngle = fixAngle(playerAngle);
-        playerDeltaX = Math.cos(Math.toRadians(playerAngle));
-        playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
-        break;
-      case KeyEvent.VK_D:
-        playerAngle -= 5;
-        playerAngle = fixAngle(playerAngle);
-        playerDeltaX = Math.cos(Math.toRadians(playerAngle));
-        playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
-        break;
-      case KeyEvent.VK_E:
-        if (wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] == 4) {
-          wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] = 0;
-        }
+    int playerXAddOffset = (playerX + xOffset) / 64;
+    if (keys.contains(KeyEvent.VK_W)) {
+      if (wallMap[(playerY / 64) * mapX + playerXAddOffset] == 0) {
+        playerX += playerDeltaX * 5;
+      }
+      if (wallMap[((playerY + yOffset) / 64) * mapX + (playerX / 64)] == 0) {
+        playerY += playerDeltaY * 5;
+      }
+    }
+    if (keys.contains(KeyEvent.VK_S)) {
+      if (wallMap[(playerY / 64) * mapX + ((playerX - xOffset) / 64)] == 0) {
+        playerX -= playerDeltaX * 5;
+      }
+      if (wallMap[((playerY - yOffset) / 64) * mapX + (playerX / 64)] == 0) {
+        playerY -= playerDeltaY * 5;
+      }
+    }
+    if (keys.contains(KeyEvent.VK_A)) {
+      playerAngle += 5;
+      playerAngle = fixAngle(playerAngle);
+      playerDeltaX = Math.cos(Math.toRadians(playerAngle));
+      playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
+    }
+    if (keys.contains(KeyEvent.VK_D)) {
+      playerAngle -= 5;
+      playerAngle = fixAngle(playerAngle);
+      playerDeltaX = Math.cos(Math.toRadians(playerAngle));
+      playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
+    }
+    if (keys.contains(KeyEvent.VK_E)) {
+      if (wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] == 4) {
+        wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] = 0;
+      }
     }
   }
-  public void keyReleased(KeyEvent event) {}
+
+  public void keyPressed(KeyEvent event) {
+    if (!keys.contains(event.getKeyCode())) {
+      keys.add(event.getKeyCode());
+    }
+  }
+  public void keyReleased(KeyEvent event) {
+    if (keys.contains(event.getKeyCode())) {
+      keys.remove(Integer.valueOf(event.getKeyCode()));
+    }
+  }
   public void keyTyped(KeyEvent event) {}
 
   private void drawRays3D() {
