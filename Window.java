@@ -124,10 +124,6 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     return angle;
   }
 
-  private double distance(double aX, double aY, double bX, double bY, double angle) {
-    return Math.cos(Math.toRadians(angle)) * (bX - aX) - Math.sin(Math.toRadians(angle)) * (bY - aY);
-  }
-
   public void keyPressed(KeyEvent event) {
     int xOffset = 0;
     int yOffset = 0;
@@ -193,7 +189,6 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     int mapArrayY;
     int mapPosition;
     int depthOfField;
-    int side;
     double rayX = 0;
     double rayY = 0;
     double rayAngle = fixAngle(playerAngle + 30);
@@ -205,7 +200,6 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       int verticalMapTexture = 0;
       int horizontalMapTexture = 0;
       depthOfField = 0;
-      side = 0;
       double verticalDistance = 1000000;
       double tan = Math.tan(Math.toRadians(rayAngle));
       if (Math.cos(Math.toRadians(rayAngle)) > 0.001) {
