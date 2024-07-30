@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.util.Scanner;
 import java.io.File;
@@ -18,8 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class Window extends JPanel implements ActionListener, KeyListener {
-  private static final int WIDTH = 1024;
-  private static final int HEIGHT = 512;
+  private static final int WIDTH = 960;
+  private static final int HEIGHT = 640;
   private final BufferedImage bufferedImage;
   private final JLabel jLabel = new JLabel();
   private final Timer timer = new Timer(10, this);
@@ -28,8 +27,10 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private int mapX = 8;
   private int mapY = 8;
   private int mapSize = 64;
-  private Scanner colorFile;
-  int[] colors = new int[27648];
+  private Scanner textureColorFile;
+  private int[] textureColors = new int[27648];
+  private Scanner skyColorFile;
+  private int[] skyColors = new int[28800];
 
   private int[] wallMap = {
     1, 1, 1, 1, 1, 1, 2, 1,
@@ -74,25 +75,35 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       bufferedImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
       jLabel.setIcon(new ImageIcon(bufferedImage));
       this.add(jLabel);
+      int line;
       try {
-        colorFile = new Scanner(new File("textures.txt"));
+        textureColorFile = new Scanner(new File("textures.txt"));
       } catch (FileNotFoundException e) {
         e.printStackTrace();
       }
-      int line = 0;
-      while (colorFile.hasNextInt()) {
-        colors[line++] = colorFile.nextInt();
+      line = 0;
+      while (textureColorFile.hasNextInt()) {
+        textureColors[line++] = textureColorFile.nextInt();
       }
-      colorFile.close();
+      
+      try {
+        skyColorFile = new Scanner(new File("sky.txt"));
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      }
+      line = 0;
+      while (skyColorFile.hasNextInt()) {
+        skyColors[line++] = skyColorFile.nextInt();
+      }
+      skyColorFile.close();
       timer.start();
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
     clear();
-    drawMap2D();
+    drawSky();
     drawRays3D();
-    drawPlayer();
     jLabel.repaint();
   }
   
@@ -100,24 +111,6 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     Graphics2D g = bufferedImage.createGraphics();
     g.setColor(new Color(50, 50, 50));
     g.fillRect(0, 0, WIDTH, HEIGHT);
-    g.dispose();
-  }
-  
-  private void drawMap2D() {
-    Graphics2D g = bufferedImage.createGraphics();
-    for (int y = 0; y < mapY; y++) {
-      for (int x = 0; x < mapX; x++) {
-        int xOffset = x * mapSize;
-        int yOffset = y * mapSize;
-        if (wallMap[y * mapX + x] > 0) {
-          g.setColor(Color.white);
-        }
-        else {
-          g.setColor(Color.black);
-        }
-        g.fillRect(xOffset + 1, yOffset + 1, mapSize - 1, mapSize - 1);
-      }
-    }
     g.dispose();
   }
 
@@ -129,14 +122,6 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       angle += 360;
     }
     return angle;
-  }
-
-  private void drawPlayer() {
-    Graphics2D g = bufferedImage.createGraphics();
-    g.setColor(Color.yellow);
-    g.fillRect(playerX - 4, playerY - 4, 8, 8);
-    g.draw(new Line2D.Double(playerX, playerY, playerX + playerDeltaX * 20, playerY + playerDeltaY * 20));
-    g.dispose();
   }
 
   private double distance(double aX, double aY, double bX, double bY, double angle) {
@@ -216,7 +201,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     double yOffset = 0;
     double verticalX = 0;
     double verticalY = 0;
-    for (int rays = 0; rays < 60; rays++) {
+    for (int rays = 0; rays < 120; rays++) {
       int verticalMapTexture = 0;
       int horizontalMapTexture = 0;
       depthOfField = 0;
@@ -303,18 +288,17 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         horizontalDistance = verticalDistance;
         shade = 0.5f;
       }
-      g.setColor(Color.BLUE);
-      g.draw(new Line2D.Double(playerX, playerY, rayX, rayY));
       
       double cameraAngle = fixAngle(playerAngle - rayAngle);
       horizontalDistance = horizontalDistance * Math.cos(Math.toRadians(cameraAngle));
-      int lineHeight = (int)((mapSize * 320) / (horizontalDistance));
+      int lineHeight = (int)((mapSize * 640) / (horizontalDistance));
       double textureYStep = 32.0 / lineHeight;
       double textureYOffset = 0;
-      if (lineHeight > 320) {
-        lineHeight = 320;
+      if (lineHeight > 640) {
+        textureYOffset = (lineHeight - 640) / 2;
+        lineHeight = 640;
       }
-      int lineOffset = 160 - (lineHeight >> 1);
+      int lineOffset = 320 - (lineHeight >> 1);
       g.setStroke(new BasicStroke(8));
       double textureY = textureYOffset * textureYStep;
       double textureX;
@@ -334,40 +318,61 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       }
       for (int y = 0; y < lineHeight; y++) {
         int pixel = ((int)textureY * 32 + (int)textureX) * 3 + (horizontalMapTexture * 32 * 32 * 3);
-        double red = colors[pixel] * shade;
-        double green = colors[pixel + 1] * shade;
-        double blue = colors[pixel + 2] * shade;
+        double red = textureColors[pixel] * shade;
+        double green = textureColors[pixel + 1] * shade;
+        double blue = textureColors[pixel + 2] * shade;
         g.setColor(new Color((int)red, (int)green, (int)blue));
-        g.drawRect(rays * 8 + 530, y + lineOffset, 1, 1);
+        g.drawRect(rays * 8, y + lineOffset, 1, 1);
         textureY += textureYStep;
       }
       g.setStroke(new BasicStroke(1));
-      for (int y = lineOffset + lineHeight; y < 320; y++) {
-        double dy = y - (320 / 2);
+      for (int y = lineOffset + lineHeight; y < 640; y++) {
+        double yDegrees = y - (640 / 2);
         double degrees = Math.toRadians(rayAngle);
         double rayAngleFix = Math.cos(Math.toRadians(fixAngle(playerAngle - rayAngle)));
-        textureX = playerX / 2 + Math.cos(degrees) * 158 * 32 / dy / rayAngleFix;
-        textureY = playerY / 2 - Math.sin(degrees) * 158 * 32 / dy / rayAngleFix;
+        textureX = playerX / 2 + Math.cos(degrees) * 158 * 2 * 32 / yDegrees / rayAngleFix;
+        textureY = playerY / 2 - Math.sin(degrees) * 158 * 2 * 32 / yDegrees / rayAngleFix;
         mapPosition = floorMap[(int)(textureY / 32.0) * mapX + (int)(textureX / 32.0)] * 32 * 32;
         int pixel = (((int)textureY & 31) * 32 + ((int)textureX & 31)) * 3 + mapPosition * 3;
-        double red = colors[pixel] * 0.7;
-        double green = colors[pixel + 1] * 0.7;
-        double blue = colors[pixel + 2] * 0.7;
+        double red = textureColors[pixel] * 0.7;
+        double green = textureColors[pixel + 1] * 0.7;
+        double blue = textureColors[pixel + 2] * 0.7;
         g.setColor(new Color((int)red, (int)green, (int)blue));
-        g.drawRect(rays * 8 + 530, y, 8, 1);
+        g.fillRect(rays * 8, y, 8, 1);
         textureY += textureYStep;
 
 
         mapPosition = ceilingMap[(int)(textureY / 32.0) * mapX + (int)(textureX / 32.0)] * 32 * 32;
-        pixel = (((int)textureY & 31) * 32 + ((int)textureX & 31)) * 3 + mapPosition * 3;
-        red = colors[pixel];
-        green = colors[pixel + 1];
-        blue = colors[pixel + 2];
-        g.setColor(new Color((int)red, (int)green, (int)blue));
-        g.drawRect(rays * 8 + 530, 320 - y, 8, 1);
+        if (mapPosition > 0) {
+          pixel = (((int)textureY & 31) * 32 + ((int)textureX & 31)) * 3 + mapPosition * 3;
+          red = textureColors[pixel];
+          green = textureColors[pixel + 1];
+          blue = textureColors[pixel + 2];
+          g.setColor(new Color((int)red, (int)green, (int)blue));
+          g.fillRect(rays * 8, 640 - y, 8, 1);
+        }
       }
-      rayAngle = fixAngle((int)rayAngle - 1);
+      rayAngle = fixAngle(rayAngle - 0.5);
     }
     g.dispose();
+  }
+
+  private void drawSky() {
+    Graphics2D g = bufferedImage.createGraphics();
+    for (int y = 0; y < 40; y++) {
+      for (int x = 0; x < 120; x++) {
+        int xOffset = (int)playerAngle * 2 - x;
+        if (xOffset < 0) {
+          xOffset += 120;
+        }
+        xOffset = xOffset % 120;
+        int pixel = (y * 120 + xOffset) * 3;
+        int red = skyColors[pixel];
+        int green = skyColors[pixel + 1];
+        int blue = skyColors[pixel + 2];
+        g.setColor(new Color((int)red, (int)green, (int)blue));
+        g.fillRect(x * 8, y * 8, 8, 8);
+      }
+    }
   }
 }
