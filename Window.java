@@ -75,27 +75,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       bufferedImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
       jLabel.setIcon(new ImageIcon(bufferedImage));
       this.add(jLabel);
-      int line;
-      try {
-        textureColorFile = new Scanner(new File("textures.txt"));
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
-      }
-      line = 0;
-      while (textureColorFile.hasNextInt()) {
-        textureColors[line++] = textureColorFile.nextInt();
-      }
-      
-      try {
-        skyColorFile = new Scanner(new File("sky.txt"));
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
-      }
-      line = 0;
-      while (skyColorFile.hasNextInt()) {
-        skyColors[line++] = skyColorFile.nextInt();
-      }
-      skyColorFile.close();
+      appendTextures();
       timer.start();
   }
 
@@ -106,6 +86,30 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     drawRays3D();
     jLabel.repaint();
   }
+
+  private void appendTextures() {
+    int line;
+    try {
+      textureColorFile = new Scanner(new File("textures.txt"));
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    line = 0;
+    while (textureColorFile.hasNextInt()) {
+      textureColors[line++] = textureColorFile.nextInt();
+    }
+    
+    try {
+      skyColorFile = new Scanner(new File("sky.txt"));
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+    line = 0;
+    while (skyColorFile.hasNextInt()) {
+      skyColors[line++] = skyColorFile.nextInt();
+    }
+    skyColorFile.close();
+  }
   
   private void clear() {
     Graphics2D g = bufferedImage.createGraphics();
@@ -115,10 +119,10 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
 
   private double fixAngle(double angle) {
-    if (angle > 359) {
+    if (angle >= 360) {
       angle -= 360;
     }
-    if (angle < 0) {
+    else if (angle < 0) {
       angle += 360;
     }
     return angle;
@@ -139,26 +143,20 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     else {
       yOffset = 20;
     }
-    int xGridPosition = playerX / 64;
-    int xOffsetAddGridPosition = (playerX + xOffset) / 64;
-    int xOffsetSubtractGridPosition = (playerX - xOffset) / 64;
-    int yGridPosition = playerY / 64;
-    int yOffsetAddGridPosition = (playerY + yOffset) / 64;
-    int yOffsetSubtractGridPosition = (playerY - yOffset) / 64;
     switch (event.getKeyCode()) {
       case KeyEvent.VK_W:
-        if (wallMap[yGridPosition * mapX + xOffsetAddGridPosition] == 0) {
+        if (wallMap[playerY / 64 * mapX + (playerX + xOffset) / 64] == 0) {
           playerX += playerDeltaX * 5;
         }
-        if (wallMap[yOffsetAddGridPosition * mapX + xGridPosition] == 0) {
+        if (wallMap[(playerY + yOffset) / 64 * mapX + playerX / 64] == 0) {
           playerY += playerDeltaY * 5;
         }
         break;
       case KeyEvent.VK_S:
-        if (wallMap[yGridPosition * mapX + xOffsetSubtractGridPosition] == 0) {
+        if (wallMap[playerY / 64 * mapX + (playerY - yOffset) / 64] == 0) {
           playerX -= playerDeltaX * 5;
         }
-        if (wallMap[yOffsetSubtractGridPosition * mapX + xGridPosition] == 0) {
+        if (wallMap[(playerY - yOffset) / 64 * mapX + playerX / 64] == 0) {
           playerY -= playerDeltaY * 5;
         }
         break;
@@ -175,8 +173,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
         break;
       case KeyEvent.VK_E:
-        if (wallMap[yOffsetAddGridPosition * mapX + xOffsetAddGridPosition] == 4) {
-          wallMap[yOffsetAddGridPosition * mapX + xOffsetAddGridPosition] = 0;
+        if (wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] == 4) {
+          wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] = 0;
         }
     }
   }
@@ -334,8 +332,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         g.setColor(new Color((int)red, (int)green, (int)blue));
         g.fillRect(rays * 8, y, 8, 1);
         textureY += textureYStep;
-
-
+        
         mapPosition = ceilingMap[(int)(textureY / 32.0) * mapX + (int)(textureX / 32.0)] * 32 * 32;
         if (mapPosition > 0) {
           pixel = (((int)textureY & 31) * 32 + ((int)textureX & 31)) * 3 + mapPosition * 3;
