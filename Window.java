@@ -36,37 +36,37 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private ArrayList<Integer> keys = new ArrayList<Integer>();
   private ArrayList<ArrayList<Integer>> sprites = new ArrayList<ArrayList<Integer>>();
 
-  private int[] wallMap = {
-    1, 1, 1, 1, 1, 1, 2, 1,
-    1, 0, 1, 0, 0, 0, 2, 1,
-    1, 0, 1, 0, 0, 0, 4, 1,
-    1, 0, 1, 0, 0, 0, 3, 1,
-    1, 0, 0, 0, 0, 0, 0, 1,
-    1, 0, 0, 0, 0, 0, 0, 1,
-    1, 0, 0, 0, 0, 1, 0, 1,
-    1, 1, 1, 1, 1, 1, 1, 1
+  private int[][] wallMap = {
+    {1, 1, 1, 1, 1, 1, 2, 1},
+    {1, 0, 1, 0, 0, 0, 2, 1},
+    {1, 0, 1, 0, 0, 0, 4, 1},
+    {1, 0, 1, 0, 0, 0, 3, 1},
+    {1, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 0, 0, 1},
+    {1, 0, 0, 0, 0, 1, 0, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1}
   };
 
-  private int[] floorMap = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 1, 1, 0, 0,
-    0, 0, 0, 0, 2, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 2, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 1, 1, 1, 1, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
+  private int[][] floorMap = {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 1, 0, 0},
+    {0, 0, 0, 0, 2, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 2, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 1, 1, 1, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0}
   };
 
-  private int[] ceilingMap = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 1, 0,
-    0, 1, 3, 1, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
+  private int[][] ceilingMap = {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 1, 0},
+    {0, 1, 3, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0}
   };
   private double playerAngle = 90;
   private double playerDeltaX = Math.cos(Math.toRadians(playerAngle));
@@ -111,8 +111,9 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     int line;
     try {
       textureColorFile = new Scanner(new File("textures.txt"));
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
+    }
+    catch (FileNotFoundException error) {
+      error.printStackTrace();
     }
     line = 0;
     while (textureColorFile.hasNextInt()) {
@@ -121,8 +122,9 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     
     try {
       skyColorFile = new Scanner(new File("sky.txt"));
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
+    }
+    catch (FileNotFoundException error) {
+      error.printStackTrace();
     }
     line = 0;
     while (skyColorFile.hasNextInt()) {
@@ -177,24 +179,24 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       yOffset = 20;
     }
     if (keys.contains(KeyEvent.VK_W)) {
-      if (wallMap[(playerY / 64) * mapX + (playerX + xOffset) / 64] == 0) {
+      if (wallMap[(playerY / 64)][(playerX + xOffset) / 64] == 0) {
         playerX += playerDeltaX * 5;
       }
-      if (wallMap[((playerY + yOffset) / 64) * mapX + (playerX / 64)] == 0) {
+      if (wallMap[((playerY + yOffset) / 64)][(playerX / 64)] == 0) {
         playerY += playerDeltaY * 5;
       }
     }
     if (keys.contains(KeyEvent.VK_S)) {
-      if (wallMap[(playerY / 64) * mapX + ((playerX - xOffset) / 64)] == 0) {
+      if (wallMap[(playerY / 64)][((playerX - xOffset) / 64)] == 0) {
         playerX -= playerDeltaX * 5;
       }
-      if (wallMap[((playerY - yOffset) / 64) * mapX + (playerX / 64)] == 0) {
+      if (wallMap[((playerY - yOffset) / 64)][(playerX / 64)] == 0) {
         playerY -= playerDeltaY * 5;
       }
     }
     if (keys.contains(KeyEvent.VK_E)) {
-      if (wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] == 4) {
-        wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] = 0;
+      if (wallMap[(playerY + yOffset) / 64][(playerX + xOffset) / 64] == 4) {
+        wallMap[(playerY + yOffset) / 64][(playerX + xOffset) / 64] = 0;
       }
     }
   }
@@ -250,9 +252,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       while (depthOfField < 8) {
         mapArrayX = (int)(rayX) >> 6;
         mapArrayY = (int)(rayY) >> 6;
-        mapPosition = mapArrayY * mapX + mapArrayX;
-        if (mapPosition > 0 && mapPosition < mapX * mapY && wallMap[mapPosition] > 0) {
-          verticalMapTexture = wallMap[mapPosition] - 1;
+        if (mapArrayY > 0 && mapArrayY < mapY && wallMap[mapArrayY][mapArrayX] > 0) {
+          verticalMapTexture = wallMap[mapArrayY][mapArrayX] - 1;
           depthOfField = 8;
           verticalDistance = Math.cos(Math.toRadians(rayAngle)) * (rayX - playerX) - Math.sin(Math.toRadians(rayAngle)) * (rayY - playerY);
         }
@@ -288,9 +289,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       while (depthOfField < 8) {
         mapArrayX = (int)(rayX) >> 6;
         mapArrayY = (int)(rayY) >> 6;
-        mapPosition = mapArrayY * mapX + mapArrayX;
-        if (mapPosition > 0 && mapPosition < mapX * mapY && wallMap[mapPosition] > 0) {
-          horizontalMapTexture = wallMap[mapPosition] - 1;
+        if (mapArrayX > 0 && mapArrayX < mapX && wallMap[mapArrayY][mapArrayX] > 0) {
+          horizontalMapTexture = wallMap[mapArrayY][mapArrayX] - 1;
           depthOfField = 8;
           horizontalDistance = Math.cos(Math.toRadians(rayAngle)) * (rayX - playerX) - Math.sin(Math.toRadians(rayAngle)) * (rayY - playerY);
         }
@@ -355,7 +355,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         double rayAngleFix = Math.cos(Math.toRadians(fixAngle(playerAngle - rayAngle)));
         textureX = playerX / 2 + Math.cos(degrees) * 158 * 2 * 32 / yDegrees / rayAngleFix;
         textureY = playerY / 2 - Math.sin(degrees) * 158 * 2 * 32 / yDegrees / rayAngleFix;
-        mapPosition = floorMap[(int)(textureY / 32.0) * mapX + (int)(textureX / 32.0)] * 32 * 32;
+        mapPosition = floorMap[(int)(textureY / 32)][(int)(textureX / 32)] * 32 * 32;
         int pixel = (((int)textureY & 31) * 32 + ((int)textureX & 31)) * 3 + mapPosition * 3;
         double red = textureColors[pixel] * 0.7;
         double green = textureColors[pixel + 1] * 0.7;
@@ -364,7 +364,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         g.fillRect(rays * 8, y, 8, 1);
         textureY += textureYStep;
         
-        mapPosition = ceilingMap[(int)(textureY / 32.0) * mapX + (int)(textureX / 32.0)] * 32 * 32;
+        mapPosition = ceilingMap[(int)(textureY / 32)][(int)(textureX / 32)] * 32 * 32;
         if (mapPosition > 0) {
           pixel = (((int)textureY & 31) * 32 + ((int)textureX & 31)) * 3 + mapPosition * 3;
           red = textureColors[pixel];
