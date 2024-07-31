@@ -226,7 +226,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     double yOffset = 0;
     double verticalX = 0;
     double verticalY = 0;
-    for (int rays = 0; rays < 120; rays++) {
+    for (byte rays = 0; rays < 120; rays++) {
       int verticalMapTexture = 0;
       int horizontalMapTexture = 0;
       depthOfField = 0;
@@ -381,8 +381,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
   private void drawSky() {
     Graphics2D g = bufferedImage.createGraphics();
-    for (int y = 0; y < 40; y++) {
-      for (int x = 0; x < 120; x++) {
+    for (byte y = 0; y < 40; y++) {
+      for (byte x = 0; x < 120; x++) {
         int xOffset = (int)playerAngle * 2 - x;
         if (xOffset < 0) {
           xOffset += 120;
