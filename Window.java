@@ -1,4 +1,3 @@
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -7,8 +6,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,6 +34,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private Scanner skyColorFile;
   private int[] skyColors = new int[28800];
   private ArrayList<Integer> keys = new ArrayList<Integer>();
+  private ArrayList<ArrayList<Integer>> sprites = new ArrayList<ArrayList<Integer>>();
 
   private int[] wallMap = {
     1, 1, 1, 1, 1, 1, 2, 1,
@@ -70,6 +72,12 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private double playerDeltaX = Math.cos(Math.toRadians(playerAngle));
   private double playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
 
+  private long lastTime = System.nanoTime();
+  private int fps;
+  private int frames;
+
+  private int[] depth = new int[120];
+
   public Window() {
       super(true);
       this.setLayout(new GridLayout());
@@ -78,6 +86,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       jLabel.setIcon(new ImageIcon(bufferedImage));
       this.add(jLabel);
       appendTextures();
+      sprites.add(new ArrayList<Integer>(Arrays.asList(1, 1, 0, (int)(1.5 * 64), 5 * 64, 20)));
       timer.start();
   }
 
@@ -86,8 +95,16 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     movePlayer();
     clear();
     drawSky();
-    drawRays3D();
+    drawScene();
+    drawSprites();
     jLabel.repaint();
+    frames++;
+    if (System.nanoTime() > lastTime + 1000000000) {
+      lastTime = System.nanoTime();
+      fps = frames;
+      frames = 0;
+      System.out.println(fps);
+    }
   }
 
   private void appendTextures() {
@@ -132,6 +149,19 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
 
   private void movePlayer() {
+    if (keys.contains(KeyEvent.VK_A)) {
+      playerAngle += 5;
+      playerAngle = fixAngle(playerAngle);
+      playerDeltaX = Math.cos(Math.toRadians(playerAngle));
+      playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
+    }
+    if (keys.contains(KeyEvent.VK_D)) {
+      playerAngle -= 5;
+      playerAngle = fixAngle(playerAngle);
+      playerDeltaX = Math.cos(Math.toRadians(playerAngle));
+      playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
+    }
+
     int xOffset = 0;
     int yOffset = 0;
     if (playerDeltaX < 0) {
@@ -146,9 +176,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     else {
       yOffset = 20;
     }
-    int playerXAddOffset = (playerX + xOffset) / 64;
     if (keys.contains(KeyEvent.VK_W)) {
-      if (wallMap[(playerY / 64) * mapX + playerXAddOffset] == 0) {
+      if (wallMap[(playerY / 64) * mapX + (playerX + xOffset) / 64] == 0) {
         playerX += playerDeltaX * 5;
       }
       if (wallMap[((playerY + yOffset) / 64) * mapX + (playerX / 64)] == 0) {
@@ -162,18 +191,6 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       if (wallMap[((playerY - yOffset) / 64) * mapX + (playerX / 64)] == 0) {
         playerY -= playerDeltaY * 5;
       }
-    }
-    if (keys.contains(KeyEvent.VK_A)) {
-      playerAngle += 5;
-      playerAngle = fixAngle(playerAngle);
-      playerDeltaX = Math.cos(Math.toRadians(playerAngle));
-      playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
-    }
-    if (keys.contains(KeyEvent.VK_D)) {
-      playerAngle -= 5;
-      playerAngle = fixAngle(playerAngle);
-      playerDeltaX = Math.cos(Math.toRadians(playerAngle));
-      playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
     if (keys.contains(KeyEvent.VK_E)) {
       if (wallMap[(playerY + yOffset) / 64 * mapX + (playerX + xOffset) / 64] == 4) {
@@ -194,7 +211,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
   public void keyTyped(KeyEvent event) {}
 
-  private void drawRays3D() {
+  private void drawScene() {
     Graphics2D g = bufferedImage.createGraphics();
     int mapArrayX;
     int mapArrayY;
@@ -304,7 +321,9 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         lineHeight = 640;
       }
       int lineOffset = 320 - (lineHeight >> 1);
-      g.setStroke(new BasicStroke(8));
+
+      depth[rays] = (int)horizontalDistance;
+
       double textureY = textureYOffset * textureYStep;
       double textureX;
       if (shade == 1) {
@@ -327,10 +346,9 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         double green = textureColors[pixel + 1] * shade;
         double blue = textureColors[pixel + 2] * shade;
         g.setColor(new Color((int)red, (int)green, (int)blue));
-        g.drawRect(rays * 8, y + lineOffset, 1, 1);
+        g.fillRect(rays * 8, y + lineOffset, 8, 8);
         textureY += textureYStep;
       }
-      g.setStroke(new BasicStroke(1));
       for (int y = lineOffset + lineHeight; y < 640; y++) {
         double yDegrees = y - (640 / 2);
         double degrees = Math.toRadians(rayAngle);
@@ -378,5 +396,37 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         g.fillRect(x * 8, y * 8, 8, 8);
       }
     }
+    g.dispose();
+  }
+
+  private void drawSprites() {
+    Graphics2D g = bufferedImage.createGraphics();
+    double spriteX = sprites.get(0).get(3) - playerX;
+    double spriteY = sprites.get(0).get(4) - playerY;
+    double spriteZ = sprites.get(0).get(5);
+
+    double cos = Math.cos(Math.toRadians(playerAngle));
+    double sin = Math.sin(Math.toRadians(playerAngle));
+
+    double a = spriteY * cos + spriteX * sin;
+    double b = spriteX * cos - spriteY * sin;
+    spriteX = a;
+    spriteY = b;
+
+    spriteX = (spriteX * 108.0 / spriteY) + (120 / 2);
+    spriteY = (spriteZ * 108.0 / spriteY) + (80 / 2);
+
+    int scale = (int)(32 * 80 / b);
+
+    for (int x = (int)spriteX - scale / 2; x < (int)spriteX + scale / 2; x++) {
+      for (int y = 0; y < scale; y++) {
+        if (x > 0 && x < 120 && b < depth[x]) {
+          g.setColor(Color.yellow);
+          g.fill(new Rectangle2D.Double(x * 8, (spriteY - y) * 8, 8, 8));
+        }
+      }
+    }
+    
+    g.dispose();
   }
 }

@@ -17,8 +17,8 @@ public class Main {
         frame.setFocusable(true);
         frame.requestFocusInWindow();
         frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
         frame.addKeyListener(window);
+        frame.setVisible(true);
       }
     });
   }
