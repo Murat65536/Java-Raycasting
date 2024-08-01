@@ -93,7 +93,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       clear(graphics);
       drawSky(graphics);
       drawScene(graphics);
-      // drawSprites(graphics);
+      drawSprites(graphics);
       jLabel.repaint();
       graphics.dispose();
     }
@@ -391,22 +391,20 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
     double cos = Math.cos(Math.toRadians(playerAngle));
     double sin = Math.sin(Math.toRadians(playerAngle));
-
-    double a = spriteY * cos + spriteX * sin;
-    double b = spriteX * cos - spriteY * sin;
-    spriteX = a;
-    spriteY = b;
-
-    spriteX = (spriteX * 108.0 / spriteY) + (120 / 2);
-    spriteY = (spriteZ * 108.0 / spriteY) + (80 / 2);
-
-    short scale = (short)(32 * 80 / b);
-
-    for (short x = (short)(spriteX - scale / 2); x < spriteX + scale / 2; x++) {
+    
+    double rotationX = spriteY * cos + spriteX * sin;
+    double rotationY = spriteX * cos - spriteY * sin;
+    
+    double screenX = (rotationX * 108.0 / rotationY) + (120 / 2);
+    double screenY = (spriteZ * 108.0 / rotationY) + (80 / 2);
+    
+    short scale = (short)(32 * 80 / rotationY);
+    
+    for (short x = (short)(screenX - scale / 2); x < (short)(screenX + scale / 2); x++) {
       for (short y = 0; y < scale; y++) {
-        if (x > 0 && x < 120 && b < depth[x]) {
+        if (x > 0 && x < 120 && rotationY < depth[x]) {
           graphics.setColor(Color.yellow);
-          graphics.fill(new Rectangle2D.Double(x * 8, (spriteY - y) * 8, 8, 8));
+          graphics.fill(new Rectangle2D.Double(x * 8, (screenY - y) * 8, 8, 8));
         }
       }
     }
