@@ -141,13 +141,13 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
   private void movePlayer() {
     if (keys.contains(KeyEvent.VK_A)) {
-      playerAngle += 5;
+      playerAngle += 2;
       playerAngle = fixAngle(playerAngle);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
     if (keys.contains(KeyEvent.VK_D)) {
-      playerAngle -= 5;
+      playerAngle -= 2;
       playerAngle = fixAngle(playerAngle);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
