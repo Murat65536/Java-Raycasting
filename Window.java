@@ -13,6 +13,10 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -81,8 +85,9 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       bufferedImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
       jLabel.setIcon(new ImageIcon(bufferedImage));
       this.add(jLabel);
-      appendTextures();
-      sprites.add(new ArrayList<Integer>(Arrays.asList(1, 1, 0, 2 * 64, 5 * 64, 20)));
+      textureColors = getTextures("textures.txt");
+      skyColors = getTextures("sky.txt");
+      sprites.add(new ArrayList<Integer>(Arrays.asList(1, 1, 0, 2, 5, 20)));
       timer.start();
     }
     
@@ -94,35 +99,32 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       drawSky(graphics);
       drawScene(graphics);
       drawSprites(graphics);
-      jLabel.repaint();
       graphics.dispose();
+      jLabel.repaint();
     }
 
-  private void appendTextures() {
-    short line = 0;
-    try {
-      textureColorFile = new Scanner(new File("textures.txt"));
-      while (textureColorFile.hasNextInt()) {
-        textureColors[line++] = textureColorFile.nextShort();
+    private short[] getTextures(String fileName) {
+      short line = 0;
+      File file = new File(fileName);
+      short[] array;
+      try {
+        array = new short[(short)Files.lines(Paths.get(fileName)).count()];
+        try {
+          Scanner items = new Scanner(file);
+          while (items.hasNextShort()) {
+            array[line++] = items.nextShort();
+          }
+          items.close();
+        }
+        catch (FileNotFoundException error) {
+          error.printStackTrace();
+        }
+        return array;
+      } catch (IOException e) {
+        e.printStackTrace();
       }
+      return null;
     }
-    catch (FileNotFoundException error) {
-      error.printStackTrace();
-    }
-    
-    line = 0;
-
-    try {
-      skyColorFile = new Scanner(new File("sky.txt"));
-      while (skyColorFile.hasNextInt()) {
-        skyColors[line++] = skyColorFile.nextShort();
-      }
-      skyColorFile.close();
-    }
-    catch (FileNotFoundException error) {
-      error.printStackTrace();
-    }
-  }
   
   private void clear(Graphics2D graphics) {
     graphics.setColor(new Color(50, 50, 50));
@@ -140,15 +142,13 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
 
   private void movePlayer() {
-    if (keys.contains(KeyEvent.VK_A)) {
-      playerAngle += 2;
-      playerAngle = fixAngle(playerAngle);
+    if (keys.contains(KeyEvent.VK_LEFT)) {
+      playerAngle = fixAngle(playerAngle + 1.5);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
-    if (keys.contains(KeyEvent.VK_D)) {
-      playerAngle -= 2;
-      playerAngle = fixAngle(playerAngle);
+    if (keys.contains(KeyEvent.VK_RIGHT)) {
+      playerAngle = fixAngle(playerAngle - 1.5);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
@@ -169,18 +169,48 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     }
     if (keys.contains(KeyEvent.VK_W)) {
       if (wallMap[(playerY / 64)][(playerX + xOffset) / 64] == 0) {
-        playerX += playerDeltaX * 5;
+        playerX += playerDeltaX * 3;
       }
       if (wallMap[((playerY + yOffset) / 64)][(playerX / 64)] == 0) {
-        playerY += playerDeltaY * 5;
+        playerY += playerDeltaY * 3;
       }
     }
     if (keys.contains(KeyEvent.VK_S)) {
       if (wallMap[(playerY / 64)][((playerX - xOffset) / 64)] == 0) {
-        playerX -= playerDeltaX * 5;
+        playerX -= playerDeltaX * 3;
       }
       if (wallMap[((playerY - yOffset) / 64)][(playerX / 64)] == 0) {
-        playerY -= playerDeltaY * 5;
+        playerY -= playerDeltaY * 3;
+      }
+    }
+    xOffset = 0;
+    yOffset = 0;
+    if (playerDeltaY < 0) {
+      xOffset = -20;
+    }
+    else {
+      xOffset = 20;
+    }
+    if (playerDeltaX < 0) {
+      yOffset = -20;
+    }
+    else {
+      yOffset = 20;
+    }
+    if (keys.contains(KeyEvent.VK_A)) {
+      if (wallMap[(playerY / 64)][((playerX + xOffset) / 64)] == 0) {
+        playerX += playerDeltaY * 3;
+      }
+      if (wallMap[((playerY - yOffset) / 64)][(playerX / 64)] == 0) {
+        playerY -= playerDeltaX * 3;
+      }
+    }
+    if (keys.contains(KeyEvent.VK_D)) {
+      if (wallMap[(playerY / 64)][(playerX - xOffset) / 64] == 0) {
+        playerX -= playerDeltaY * 3;
+      }
+      if (wallMap[((playerY + yOffset) / 64)][(playerX / 64)] == 0) {
+        playerY += playerDeltaX * 3;
       }
     }
     if (keys.contains(KeyEvent.VK_E)) {
@@ -385,8 +415,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
 
   private void drawSprites(Graphics2D graphics) {
-    double spriteX = sprites.get(0).get(3) - playerX;
-    double spriteY = sprites.get(0).get(4) - playerY;
+    double spriteX = sprites.get(0).get(3) * 64 - playerX;
+    double spriteY = sprites.get(0).get(4) * 64 - playerY;
     double spriteZ = sprites.get(0).get(5);
 
     double cos = Math.cos(Math.toRadians(playerAngle));
