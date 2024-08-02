@@ -33,9 +33,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private byte mapX = 8;
   private byte mapY = 8;
   private short mapSize = 64;
-  private Scanner textureColorFile;
   private short[] textureColors = new short[27648];
-  private Scanner skyColorFile;
   private short[] skyColors = new short[28800];
   private ArrayList<Integer> keys = new ArrayList<Integer>();
   private ArrayList<ArrayList<Integer>> sprites = new ArrayList<ArrayList<Integer>>();
@@ -212,6 +210,18 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       if (wallMap[((playerY + yOffset) / 64)][(playerX / 64)] == 0) {
         playerY += playerDeltaX * 3;
       }
+    }
+    if (playerDeltaX < 0) {
+      xOffset = -25;
+    }
+    else {
+      xOffset = 25;
+    }
+    if (playerDeltaY < 0) {
+      yOffset = -25;
+    }
+    else {
+      yOffset = 25;
     }
     if (keys.contains(KeyEvent.VK_E)) {
       if (wallMap[(playerY + yOffset) / 64][(playerX + xOffset) / 64] == 4) {
