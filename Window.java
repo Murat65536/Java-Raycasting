@@ -10,13 +10,9 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,8 +29,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private byte mapX = 8;
   private byte mapY = 8;
   private short mapSize = 64;
-  private short[] textureColors = new short[27648];
-  private short[] skyColors = new short[28800];
+  private Color[] textures = new Color[8192];
+  private Color[] sky = new Color[4800];
   private ArrayList<Integer> keys = new ArrayList<Integer>();
   private ArrayList<ArrayList<Integer>> sprites = new ArrayList<ArrayList<Integer>>();
 
@@ -70,7 +66,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     {0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0}
   };
-  private double playerAngle = 90;
+  private float playerAngle = 90;
   private double playerDeltaX = Math.cos(Math.toRadians(playerAngle));
   private double playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
 
@@ -83,8 +79,13 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       bufferedImage = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
       jLabel.setIcon(new ImageIcon(bufferedImage));
       this.add(jLabel);
-      textureColors = getTextures("textures.txt");
-      skyColors = getTextures("sky.txt");
+      try {
+        textures = getTextures("textures.png");
+        sky = getTextures("sky.png");
+      }
+      catch (IOException error) {
+        error.printStackTrace();
+      }
       sprites.add(new ArrayList<Integer>(Arrays.asList(1, 1, 0, 2, 5, 20)));
       timer.start();
     }
@@ -101,27 +102,16 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       jLabel.repaint();
     }
 
-    private short[] getTextures(String fileName) {
-      short line = 0;
+    private Color[] getTextures(String fileName) throws IOException {
       File file = new File(fileName);
-      short[] array;
-      try {
-        array = new short[(short)Files.lines(Paths.get(fileName)).count()];
-        try {
-          Scanner items = new Scanner(file);
-          while (items.hasNextShort()) {
-            array[line++] = items.nextShort();
-          }
-          items.close();
+      BufferedImage image = ImageIO.read(file);
+      Color[] colors = new Color[image.getWidth() * image.getHeight()];
+      for (int y = 0; y < image.getHeight(); y++) {
+        for (int x = 0; x < image.getWidth(); x++) {
+          colors[y * image.getWidth() + x] = new Color(image.getRGB(x, y));
         }
-        catch (FileNotFoundException error) {
-          error.printStackTrace();
-        }
-        return array;
-      } catch (IOException e) {
-        e.printStackTrace();
       }
-      return null;
+      return colors;
     }
   
   private void clear(Graphics2D graphics) {
@@ -129,7 +119,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     graphics.fillRect(0, 0, WIDTH, HEIGHT);
   }
 
-  private double fixAngle(double angle) {
+  private float fixAngle(float angle) {
     if (angle >= 360) {
       angle -= 360;
     }
@@ -141,12 +131,12 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
   private void movePlayer() {
     if (keys.contains(KeyEvent.VK_LEFT)) {
-      playerAngle = fixAngle(playerAngle + 1.5);
+      playerAngle = fixAngle(playerAngle + 1.5f);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
     if (keys.contains(KeyEvent.VK_RIGHT)) {
-      playerAngle = fixAngle(playerAngle - 1.5);
+      playerAngle = fixAngle(playerAngle - 1.5f);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
@@ -249,7 +239,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     byte depthOfField;
     double rayX = 0;
     double rayY = 0;
-    double rayAngle = fixAngle(playerAngle + 30);
+    float rayAngle = fixAngle(playerAngle + 30);
     double xOffset = 0;
     double yOffset = 0;
     double verticalX = 0;
@@ -369,11 +359,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         }
       }
       for (short y = 0; y < lineHeight; y++) {
-        short pixel = (short)((short)((short)textureY * 32 + textureX) * 3 + ((short)horizontalMapTexture * 32 * 32 * 3));
-        double red = textureColors[pixel] * shade;
-        double green = textureColors[pixel + 1] * shade;
-        double blue = textureColors[pixel + 2] * shade;
-        graphics.setColor(new Color((short)red, (short)green, (short)blue));
+        short pixel = (short)((short)((short)textureY * 32 + textureX) + ((short)horizontalMapTexture * 32 * 32));
+        graphics.setColor(textures[pixel]);
         graphics.fillRect(rays * 8, y + lineOffset, 8, 8);
         textureY += textureYStep;
       }
@@ -384,25 +371,19 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         textureX = playerX / 2 + Math.cos(degrees) * 158 * 2 * 32 / yDegrees / rayAngleFix;
         textureY = playerY / 2 - Math.sin(degrees) * 158 * 2 * 32 / yDegrees / rayAngleFix;
         mapPosition = (short)(floorMap[(short)(textureY / 32)][(short)(textureX / 32)] * 32 * 32);
-        short pixel = (short)((((short)textureY & 31) * 32 + ((short)textureX & 31)) * 3 + mapPosition * 3);
-        double red = textureColors[pixel] * 0.7;
-        double green = textureColors[pixel + 1] * 0.7;
-        double blue = textureColors[pixel + 2] * 0.7;
-        graphics.setColor(new Color((short)red, (short)green, (short)blue));
+        short pixel = (short)((((short)textureY & 31) * 32 + ((short)textureX & 31)) + mapPosition);
+        graphics.setColor(textures[pixel]);
         graphics.fillRect(rays * 8, y, 8, 1);
         textureY += textureYStep;
         
         mapPosition = (short)(ceilingMap[(short)(textureY / 32)][(short)(textureX / 32)] * 32 * 32);
         if (mapPosition > 0) {
-          pixel = (short)((((short)textureY & 31) * 32 + ((short)textureX & 31)) * 3 + mapPosition * 3);
-          red = textureColors[pixel];
-          green = textureColors[pixel + 1];
-          blue = textureColors[pixel + 2];
-          graphics.setColor(new Color((short)red, (short)green, (short)blue));
+          pixel = (short)((((short)textureY & 31) * 32 + ((short)textureX & 31)) + mapPosition);
+          graphics.setColor(textures[pixel]);
           graphics.fillRect(rays * 8, 640 - y, 8, 1);
         }
       }
-      rayAngle = fixAngle(rayAngle - 0.5);
+      rayAngle = fixAngle(rayAngle - 0.5f);
     }
   }
 
@@ -414,11 +395,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
           xOffset += 120;
         }
         xOffset = (short)(xOffset % 120);
-        short pixel = (short)((y * 120 + xOffset) * 3);
-        short red = skyColors[pixel];
-        short green = skyColors[pixel + 1];
-        short blue = skyColors[pixel + 2];
-        graphics.setColor(new Color(red, green, blue));
+        short pixel = (short)((y * 120 + xOffset));
+        graphics.setColor(sky[pixel]);
         graphics.fillRect(x * 8, y * 8, 8, 8);
       }
     }
