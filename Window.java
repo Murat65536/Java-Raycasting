@@ -24,14 +24,14 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private final BufferedImage bufferedImage;
   private final JLabel jLabel = new JLabel();
   private final Timer timer = new Timer(10, this);
-  private short playerX = 150;
-  private short playerY = 400;
+  private double playerX = 150;
+  private double playerY = 400;
   private byte mapX = 8;
   private byte mapY = 8;
   private short mapSize = 64;
   private Color[] textures = new Color[8192];
   private Color[] sky = new Color[4800];
-  private ArrayList<Integer> keys = new ArrayList<Integer>();
+  private ArrayList<Integer> pressedKeys = new ArrayList<Integer>();
   private ArrayList<ArrayList<Integer>> sprites = new ArrayList<ArrayList<Integer>>();
 
   private byte[][] wallMap = {
@@ -130,12 +130,12 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   }
 
   private void movePlayer() {
-    if (keys.contains(KeyEvent.VK_LEFT)) {
+    if (pressedKeys.contains(KeyEvent.VK_LEFT)) {
       playerAngle = fixAngle(playerAngle + 1.5f);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
-    if (keys.contains(KeyEvent.VK_RIGHT)) {
+    if (pressedKeys.contains(KeyEvent.VK_RIGHT)) {
       playerAngle = fixAngle(playerAngle - 1.5f);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
@@ -155,19 +155,19 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     else {
       yOffset = 20;
     }
-    if (keys.contains(KeyEvent.VK_W)) {
-      if (wallMap[(playerY / 64)][(playerX + xOffset) / 64] == 0) {
+    if (pressedKeys.contains(KeyEvent.VK_W)) {
+      if (wallMap[(short)playerY / 64][((short)playerX + xOffset) / 64] == 0) {
         playerX += playerDeltaX * 3;
       }
-      if (wallMap[((playerY + yOffset) / 64)][(playerX / 64)] == 0) {
+      if (wallMap[((short)playerY + yOffset) / 64][(short)playerX / 64] == 0) {
         playerY += playerDeltaY * 3;
       }
     }
-    if (keys.contains(KeyEvent.VK_S)) {
-      if (wallMap[(playerY / 64)][((playerX - xOffset) / 64)] == 0) {
+    if (pressedKeys.contains(KeyEvent.VK_S)) {
+      if (wallMap[(short)playerY / 64][((short)playerX - xOffset) / 64] == 0) {
         playerX -= playerDeltaX * 3;
       }
-      if (wallMap[((playerY - yOffset) / 64)][(playerX / 64)] == 0) {
+      if (wallMap[((short)playerY - yOffset) / 64][(short)playerX / 64] == 0) {
         playerY -= playerDeltaY * 3;
       }
     }
@@ -185,19 +185,19 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     else {
       yOffset = 20;
     }
-    if (keys.contains(KeyEvent.VK_A)) {
-      if (wallMap[(playerY / 64)][((playerX + xOffset) / 64)] == 0) {
+    if (pressedKeys.contains(KeyEvent.VK_A)) {
+      if (wallMap[(short)playerY / 64][((short)playerX + xOffset) / 64] == 0) {
         playerX += playerDeltaY * 3;
       }
-      if (wallMap[((playerY - yOffset) / 64)][(playerX / 64)] == 0) {
+      if (wallMap[((short)playerY - yOffset) / 64][(short)playerX / 64] == 0) {
         playerY -= playerDeltaX * 3;
       }
     }
-    if (keys.contains(KeyEvent.VK_D)) {
-      if (wallMap[(playerY / 64)][(playerX - xOffset) / 64] == 0) {
+    if (pressedKeys.contains(KeyEvent.VK_D)) {
+      if (wallMap[(short)playerY / 64][((short)playerX - xOffset) / 64] == 0) {
         playerX -= playerDeltaY * 3;
       }
-      if (wallMap[((playerY + yOffset) / 64)][(playerX / 64)] == 0) {
+      if (wallMap[((short)playerY + yOffset) / 64][(short)playerX / 64] == 0) {
         playerY += playerDeltaX * 3;
       }
     }
@@ -213,21 +213,21 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     else {
       yOffset = 25;
     }
-    if (keys.contains(KeyEvent.VK_E)) {
-      if (wallMap[(playerY + yOffset) / 64][(playerX + xOffset) / 64] == 4) {
-        wallMap[(playerY + yOffset) / 64][(playerX + xOffset) / 64] = 0;
+    if (pressedKeys.contains(KeyEvent.VK_E)) {
+      if (wallMap[((short)playerY + yOffset) / 64][((short)playerX + xOffset) / 64] == 4) {
+        wallMap[((short)playerY + yOffset) / 64][((short)playerX + xOffset) / 64] = 0;
       }
     }
   }
 
   public void keyPressed(KeyEvent event) {
-    if (!keys.contains(event.getKeyCode())) {
-      keys.add(event.getKeyCode());
+    if (!pressedKeys.contains(event.getKeyCode())) {
+      pressedKeys.add(event.getKeyCode());
     }
   }
   public void keyReleased(KeyEvent event) {
-    if (keys.contains(event.getKeyCode())) {
-      keys.remove(Integer.valueOf(event.getKeyCode()));
+    if (pressedKeys.contains(event.getKeyCode())) {
+      pressedKeys.remove(Integer.valueOf(event.getKeyCode()));
     }
   }
   public void keyTyped(KeyEvent event) {}
@@ -251,14 +251,14 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       double verticalDistance = 1000000;
       double tan = Math.tan(Math.toRadians(rayAngle));
       if (Math.cos(Math.toRadians(rayAngle)) > 0.001) {
-        rayX = ((playerX >> 6) << 6) + 64;
-        rayY = (playerX - rayX) * tan + playerY;
+        rayX = (((short)playerX >> 6) << 6) + 64;
+        rayY = ((short)playerX - rayX) * tan + playerY;
         xOffset = 64;
         yOffset = -xOffset * tan;
       }
       else if (Math.cos(Math.toRadians(rayAngle)) < -0.001) {
-        rayX = ((playerX >> 6) << 6) - 0.0001;
-        rayY = (playerX - rayX) * tan + playerY;
+        rayX = (((short)playerX >> 6) << 6) - 0.0001;
+        rayY = ((short)playerX - rayX) * tan + playerY;
         xOffset = -64;
         yOffset = -xOffset * tan;
       }
@@ -288,13 +288,13 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       double horizontalDistance = 1000000;
       tan = 1 / tan;
       if (Math.sin(Math.toRadians(rayAngle)) > 0.001) {
-        rayY = ((playerY >> 6) << 6) - 0.0001;
+        rayY = (((short)playerY >> 6) << 6) - 0.0001;
         rayX = (playerY - rayY) * tan + playerX;
         yOffset = -64;
         xOffset = -yOffset * tan;
       }
       else if (Math.sin(Math.toRadians(rayAngle)) < -0.001) {
-        rayY = ((playerY >> 6) << 6) + 64;
+        rayY = (((short)playerY >> 6) << 6) + 64;
         rayX = (playerY - rayY) * tan + playerX;
         yOffset = 64;
         xOffset = -yOffset * tan;
@@ -332,7 +332,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       double cameraAngle = fixAngle(playerAngle - rayAngle);
       horizontalDistance = horizontalDistance * Math.cos(Math.toRadians(cameraAngle));
       short lineHeight = (short)((mapSize * 640) / (horizontalDistance));
-      double textureYStep = 32.0 / lineHeight;
+      double textureYStep = 32f / lineHeight;
       double textureYOffset = 0;
       if (lineHeight > 640) {
         textureYOffset = (lineHeight - 640) / 2;
@@ -413,12 +413,12 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     double rotationX = spriteY * cos + spriteX * sin;
     double rotationY = spriteX * cos - spriteY * sin;
     
-    double screenX = (rotationX * 108.0 / rotationY) + (120 / 2);
-    double screenY = (spriteZ * 108.0 / rotationY) + (80 / 2);
+    double screenX = (rotationX * 108f / rotationY) + (120 / 2);
+    double screenY = (spriteZ * 108f / rotationY) + (80 / 2);
     
     short scale = (short)(32 * 80 / rotationY);
     
-    for (short x = (short)(screenX - scale / 2); x < (short)(screenX + scale / 2); x++) {
+    for (int x = (int)(screenX - scale / 2); x < (int)(screenX + scale / 2); x++) {
       for (short y = 0; y < scale; y++) {
         if (x > 0 && x < 120 && rotationY < depth[x]) {
           graphics.setColor(Color.yellow);
