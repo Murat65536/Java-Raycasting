@@ -320,13 +320,13 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       }
       
 
-      float shade = 1;
+      boolean shade = false;
       if (verticalDistance < horizontalDistance) {
         horizontalMapTexture = verticalMapTexture;
         rayX = verticalX;
         rayY = verticalY;
         horizontalDistance = verticalDistance;
-        shade = 0.5f;
+        shade = true;
       }
       
       double cameraAngle = fixAngle(playerAngle - rayAngle);
@@ -344,7 +344,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
       double textureY = textureYOffset * textureYStep;
       double textureX;
-      if (shade == 1) {
+      if (!shade) {
         textureX = (rayX / 2) % 32;
         if (rayAngle > 180) {
           if (rayAngle > 180) {
@@ -360,7 +360,12 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       }
       for (short y = 0; y < lineHeight; y++) {
         short pixel = (short)((short)((short)textureY * 32 + textureX) + ((short)horizontalMapTexture * 32 * 32));
-        graphics.setColor(textures[pixel]);
+        if (shade) {
+          graphics.setColor(textures[pixel].darker());
+        }
+        else {
+          graphics.setColor(textures[pixel]);
+        }
         graphics.fillRect(ray * 8, y + lineOffset, 8, 8);
         textureY += textureYStep;
       }
