@@ -69,8 +69,8 @@ public class Window extends JPanel implements ActionListener, KeyListener {
   private float playerAngle = 90;
   private double playerDeltaX = Math.cos(Math.toRadians(playerAngle));
   private double playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
-
-  private short[] depth = new short[120];
+  private short rays = 120;
+  private short[] depth = new short[rays];
 
   public Window() {
       super(true);
@@ -131,12 +131,12 @@ public class Window extends JPanel implements ActionListener, KeyListener {
 
   private void movePlayer() {
     if (pressedKeys.contains(KeyEvent.VK_LEFT)) {
-      playerAngle = fixAngle(playerAngle + 1.5f);
+      playerAngle = fixAngle(playerAngle + 1);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
     if (pressedKeys.contains(KeyEvent.VK_RIGHT)) {
-      playerAngle = fixAngle(playerAngle - 1.5f);
+      playerAngle = fixAngle(playerAngle - 1);
       playerDeltaX = Math.cos(Math.toRadians(playerAngle));
       playerDeltaY = -Math.sin(Math.toRadians(playerAngle));
     }
@@ -187,18 +187,18 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     }
     if (pressedKeys.contains(KeyEvent.VK_A)) {
       if (wallMap[(short)playerY / 64][((short)playerX + xOffset) / 64] == 0) {
-        playerX += playerDeltaY * 3;
+        playerX += playerDeltaY * 1.5;
       }
       if (wallMap[((short)playerY - yOffset) / 64][(short)playerX / 64] == 0) {
-        playerY -= playerDeltaX * 3;
+        playerY -= playerDeltaX * 1.5;
       }
     }
     if (pressedKeys.contains(KeyEvent.VK_D)) {
       if (wallMap[(short)playerY / 64][((short)playerX - xOffset) / 64] == 0) {
-        playerX -= playerDeltaY * 3;
+        playerX -= playerDeltaY * 1.5;
       }
       if (wallMap[((short)playerY + yOffset) / 64][(short)playerX / 64] == 0) {
-        playerY += playerDeltaX * 3;
+        playerY += playerDeltaX * 1.5;
       }
     }
     if (playerDeltaX < 0) {
@@ -244,7 +244,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
     double yOffset = 0;
     double verticalX = 0;
     double verticalY = 0;
-    for (short rays = 0; rays < 120; rays++) {
+    for (short ray = 0; ray < rays; ray++) {
       short verticalMapTexture = 0;
       short horizontalMapTexture = 0;
       depthOfField = 0;
@@ -270,7 +270,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       while (depthOfField < 8) {
         mapArrayX = (short)((short)(rayX) >> 6);
         mapArrayY = (short)((short)(rayY) >> 6);
-        if (mapArrayY > 0 && mapArrayY < mapY && wallMap[mapArrayY][mapArrayX] > 0) {
+        if (mapArrayX >= 0 && mapArrayX < mapX && mapArrayY >= 0 && mapArrayY < mapY && wallMap[mapArrayY][mapArrayX] > 0) {
           verticalMapTexture = (short)(wallMap[mapArrayY][mapArrayX] - 1);
           depthOfField = 8;
           verticalDistance = Math.cos(Math.toRadians(rayAngle)) * (rayX - playerX) - Math.sin(Math.toRadians(rayAngle)) * (rayY - playerY);
@@ -307,7 +307,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       while (depthOfField < 8) {
         mapArrayX = (short)((short)(rayX) >> 6);
         mapArrayY = (short)((short)(rayY) >> 6);
-        if (mapArrayX > 0 && mapArrayX < mapX && wallMap[mapArrayY][mapArrayX] > 0) {
+        if (mapArrayX >= 0 && mapArrayX < mapX && mapArrayY >= 0 && mapArrayY < mapY && wallMap[mapArrayY][mapArrayX] > 0) {
           horizontalMapTexture = (short)(wallMap[mapArrayY][mapArrayX] - 1);
           depthOfField = 8;
           horizontalDistance = Math.cos(Math.toRadians(rayAngle)) * (rayX - playerX) - Math.sin(Math.toRadians(rayAngle)) * (rayY - playerY);
@@ -340,7 +340,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       }
       short lineOffset = (short)(320 - (lineHeight >> 1));
 
-      depth[rays] = (short)horizontalDistance;
+      depth[ray] = (short)horizontalDistance;
 
       double textureY = textureYOffset * textureYStep;
       double textureX;
@@ -361,7 +361,7 @@ public class Window extends JPanel implements ActionListener, KeyListener {
       for (short y = 0; y < lineHeight; y++) {
         short pixel = (short)((short)((short)textureY * 32 + textureX) + ((short)horizontalMapTexture * 32 * 32));
         graphics.setColor(textures[pixel]);
-        graphics.fillRect(rays * 8, y + lineOffset, 8, 8);
+        graphics.fillRect(ray * 8, y + lineOffset, 8, 8);
         textureY += textureYStep;
       }
       for (short y = (short)(lineOffset + lineHeight); y < 640; y++) {
@@ -373,14 +373,14 @@ public class Window extends JPanel implements ActionListener, KeyListener {
         mapPosition = (short)(floorMap[(short)(textureY / 32)][(short)(textureX / 32)] * 32 * 32);
         short pixel = (short)((((short)textureY & 31) * 32 + ((short)textureX & 31)) + mapPosition);
         graphics.setColor(textures[pixel]);
-        graphics.fillRect(rays * 8, y, 8, 1);
+        graphics.fillRect(ray * 8, y, 8, 1);
         textureY += textureYStep;
         
         mapPosition = (short)(ceilingMap[(short)(textureY / 32)][(short)(textureX / 32)] * 32 * 32);
         if (mapPosition > 0) {
           pixel = (short)((((short)textureY & 31) * 32 + ((short)textureX & 31)) + mapPosition);
           graphics.setColor(textures[pixel]);
-          graphics.fillRect(rays * 8, 640 - y, 8, 1);
+          graphics.fillRect(ray * 8, 640 - y, 8, 1);
         }
       }
       rayAngle = fixAngle(rayAngle - 0.5f);
